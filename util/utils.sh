@@ -108,9 +108,9 @@ function gen-readme {
     echo $final_result >$SUBMISSION_DIR/submission.status
 
     if [ $final_result = "$PASS" ]; then
-        icon=https://raw.githubusercontent.com/bjucps250/cps250-tests/master/images/pass.png
+        icon=https://raw.githubusercontent.com/bjucps/cps250-tests/master/images/pass.png
     else
-        icon=https://raw.githubusercontent.com/bjucps250/cps250-tests/master/images/fail.png
+        icon=https://raw.githubusercontent.com/bjucps/cps250-tests/master/images/fail.png
     fi
 
     cat > $SUBMISSION_DIR/README.md <<EOF
