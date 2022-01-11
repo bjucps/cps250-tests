@@ -40,7 +40,8 @@ then
   set -x
 fi
 
-if [ -e $TEST_DIR/_$PROJECT.sh ]then
+if [ -e $TEST_DIR/_$PROJECT.sh ]
+then
     # Copy test files to submission folder
     cp -r $TEST_DIR/_* .
 
