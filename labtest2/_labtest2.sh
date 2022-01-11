@@ -9,7 +9,7 @@ if [ ! -z "$(ls *.c 2>/dev/null)" ]; then
     echo Compiling $CFILE...
     rm $XFILE 2>/dev/null
     CMD="gcc -std=c99 $CFILE -lbsd -o$XFILE"
-    do-compile --test-message "Successful compile of $CFILE" "$CMD" "$XFILE"
+    do-compile --test-message "Successful compile of $CFILE" --expect-exe $XFILE $CMD
   done
 
 fi

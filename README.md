@@ -4,8 +4,10 @@ To run tests locally:
 
 ```
 cd submission-folder
-run lab1
+run lab1 [ -d ]
 ```
+
+Add the -d option to turn on shell script debugging output.
 
 To run tests interactively:
 

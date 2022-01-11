@@ -12,7 +12,7 @@ require-files Makefile
 require-files --test-category "Warning" --test-message "webserver.c, utils.c submitted" webserver.c utils.c
 
 [ -r webserver ] && rm webserver *.o
-do-compile "make release" "webserver"
+do-compile --expect-exe webserver make release
 
 exit-if-must-pass-tests-failed
 

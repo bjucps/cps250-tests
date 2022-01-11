@@ -1,6 +1,7 @@
 #!/bin/bash
+export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
-# This script runs in my local Docker container. It sets up the
+# This script runs in a local Docker container. It sets up the
 # folder structure for a submission test and runs the test, then copies test results
 # to the student folder
 
@@ -12,8 +13,10 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-project=$1
-export TEST_DIR=$TEST_BASE_DIR/$project
+[ "$2" = "-d" ] && export DEBUG=1
+
+export PROJECT=$1
+export TEST_DIR=$TEST_BASE_DIR/$PROJECT
 
 # Cleanup previous test results if we're running in the same Docker container
 test -f $TEST_RESULT_FILE && rm $TEST_RESULT_FILE
@@ -24,29 +27,23 @@ cp -r /submission_src /submission
 cd /submission
 
 export SUBMISSION_DIR=$(pwd)
-export NO_INSTALL_PACKAGES=1  # Disable installation of packages since the local Docker image already includes everything
 
-if [ -e $TEST_DIR/_runtests.sh ]
+if [ -e $TEST_DIR/_$PROJECT.sh ]
 then
-    # Copy test files to submission folder
-    cp -r $TEST_DIR/_* .
-
-    run-tests || report-error "Warning" "Test script completed successfully"
+    run-tests 2>&1 | tee $LOG_FILE
 else
-    echo No tests for $project submissions... >$LOG_FILE
+    echo "Please create $PROJECT/_$PROJECT.sh."
+    exit 1 
 fi
-
-gen-readme
-
-echo Log file
-echo -------------------------
-cat $LOG_FILE
 
 echo Test results
 echo -------------------------
 cat $TEST_RESULT_FILE
 echo -------------------------
 
+gen-readme
+
 echo Overall Result: $(cat $SUBMISSION_DIR/submission.status)
 
-cp $LOG_FILE $TEST_RESULT_FILE README.md /submission_src
+#cp $LOG_FILE $TEST_RESULT_FILE README.md /submission_src
+cp README.md /submission_src

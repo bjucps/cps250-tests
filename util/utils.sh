@@ -5,7 +5,10 @@ export LOG_FILE=$BASEDIR/_log.txt
 export TEST_BASE_DIR=$BASEDIR/tests
 #export TEST_DIR=   # Must be set by script
 #export SUBMISSION_DIR=   # Must be set by script
+#export PROJECT  # set by rungh.sh
 export TIMEOUT=5  # default timeout in seconds
+export PASS_IMG=https://raw.githubusercontent.com/bjucps/cps250-tests/main/images/pass.png
+export FAIL_IMG=https://raw.githubusercontent.com/bjucps/cps250-tests/main/images/fail.png
 
 # Constants
 CAT_MUST_PASS="Must Pass"
@@ -29,7 +32,7 @@ function must-pass-tests-failed {
 }
 
 function exit-if-must-pass-tests-failed {
-    must-pass-tests-failed && exit 1
+    must-pass-tests-failed && exit 0
 }
 
 # Detect project name
@@ -53,6 +56,12 @@ function is-local-test {
 
 # Returns 0 on success, 1 on failure
 function run-tests {
+    local BASH_DEBUG_OPT
+
+    if [ -n "$DEBUG" ]; then
+      BASH_DEBUG_OPT=-x
+    fi
+
     # Read test config if it exists
     if [ -r $TEST_DIR/_config.sh ]; then
       . $TEST_DIR/_config.sh
@@ -79,16 +88,19 @@ function run-tests {
       fi
     fi
 
-    echo "Beginning test run with timeout $TIMEOUT"
+    if [ $TIMEOUT -gt 0 ]; then
+        timeout_cmd="timeout --verbose -k 1  $TIMEOUT"
+        #echo "Beginning test run with overall time limit $TIMEOUT seconds..."
+    fi
+    
     result=0
-    if BASH_ENV=$TEST_BASE_DIR/util/utils.sh timeout -k 1 $TIMEOUT bash _runtests.sh >$LOG_FILE 2>&1
+    if ! BASH_ENV=$TEST_BASE_DIR/util/utils.sh $timeout_cmd bash $BASH_DEBUG_OPT $TEST_DIR/_$PROJECT.sh  2>&1 
     then
-        echo "Test run completed."
-    else
-        if [ $? -eq 124 ]; then
+        if [ ${PIPESTATUS[0]} -eq 124 ]; then
+          echo -e "\n\n** WARNING: Time limit of $TIMEOUT seconds exceeded. All tests aborted."
           report-error "$CAT_MUST_PASS" "Complete all tests within $TIMEOUT seconds"
-        else
-          report-error "$CAT_MUST_PASS" "Complete basic tests successfully"
+        # else
+        #   report-error "$CAT_MUST_PASS" "Complete basic tests successfully"
         fi
         result=1
     fi
@@ -108,9 +120,9 @@ function gen-readme {
     echo $final_result >$SUBMISSION_DIR/submission.status
 
     if [ $final_result = "$PASS" ]; then
-        icon=https://raw.githubusercontent.com/bjucps/cps250-tests/master/images/pass.png
+        icon=$PASS_IMG
     else
-        icon=https://raw.githubusercontent.com/bjucps/cps250-tests/master/images/fail.png
+        icon=$FAIL_IMG
     fi
 
     cat > $SUBMISSION_DIR/README.md <<EOF
@@ -120,8 +132,8 @@ Test results generated at **$(TZ=America/New_York date)**
 
 Category | Test | Result
 ---------|------|-------
-$(awk -F~ -f $TEST_BASE_DIR/util/gentable.awk $TEST_RESULT_FILE | grep "^Must Pass")
-$(awk -F~ -f $TEST_BASE_DIR/util/gentable.awk $TEST_RESULT_FILE | grep -v "^Must Pass")
+$(awk -F~ -f $TEST_BASE_DIR/util/gentable.awk -v PASS_IMG="$PASS_IMG" -v FAIL_IMG="$FAIL_IMG" $TEST_RESULT_FILE | grep "^Must Pass")
+$(awk -F~ -f $TEST_BASE_DIR/util/gentable.awk -v PASS_IMG="$PASS_IMG" -v FAIL_IMG="$FAIL_IMG" $TEST_RESULT_FILE | grep -v "^Must Pass")
 
 ## Detailed Test Results
 \`\`\`
@@ -185,9 +197,9 @@ function require-pdf {
 }
 
 # Compiles a program and reports success or failure
-# Usage: do-compile <compile command> [ <expected executable> ]
+# Usage: do-compile [ --always-show-output ] [ --test-message <msg> ] [ --expect-exe <filename> ] <compile command> 
 # Example:
-#     do-compile [ --always-show-output ] [ --test-message <msg> ] "gcc -g myproc.c -omyprog" "myprog" 
+#     do-compile --expect-exe myprog gcc -g myproc.c -omyprog
 function do-compile {
     local result=$FAIL
     local detail
@@ -195,29 +207,35 @@ function do-compile {
     local compile_cmd
     local expected_exe
     local testmessage="Successful compile"
+    local opt_check=1
     
-    if [ "$1" = "--always-show-output" ]; then
-        always_show=1
-        shift
-    fi
-    if [ "$1" = "--test-message" ]; then
-        testmessage=$2
-        shift 2
-    fi
+    while [ $opt_check -eq 1 ]; do
 
+        if [ "$1" = "--always-show-output" ]; then
+            always_show=1
+            shift
+        elif [ "$1" = "--test-message" ]; then
+            testmessage=$2
+            shift 2
+        elif [ "$1" = "--expect-exe" ]; then
+            expected_exe=$2
+            shift 2
+        else
+            opt_check=0
+        fi
+    done
 
-    compile_cmd=$1
-    expected_exe=$2
+    echo -en "\nCompiling: $* ... "
 
-    if detail=$($compile_cmd 2>&1); then
+    if detail=$($* 2>&1); then
         result=$PASS
         if [ -n "$expected_exe" -a ! -e "$expected_exe" ]; then
             result=$FAIL
-            detail="No executable $expected_exe produced from make"
+            detail="No executable $expected_exe produced from compile"
         fi
     fi
 
-    echo -e "\nExecuting: $compile_cmd... $result"
+    echo "$result"
     if [ $result = $FAIL -o $always_show -eq 1 ]; then
         echo "----------------------------------------------------------------"
         echo "$detail"
@@ -243,43 +261,88 @@ function do-compile {
 function run-program {
     local testcategory="Warning" 
     local testmessage
-    local timeout=30              # Default timeout
+    local timeout=30              # Default timeout (0 - none)
     local showoutputonpass=0 
     local maxlines=50
     local result
+    local expected_fn
+    local incorrect_result=0
+    local opt_check=1
+    local timeout_cmd
 
     testcategory="Warning"
-    if [ "$1" = "--test-category" ]; then
-        testcategory=$2
-        shift 2
-    fi
-    if [ "$1" = "--test-message" ]; then
-        testmessage=$2
-        shift 2
-    fi
-    if [ "$1" = "--timeout" ]; then
-        timeout=$2
-        shift 2
-    fi
-    if [ "$1" = "--max-lines" ]; then
-        maxlines=$2
-        shift 2
-    fi
-    if [ "$1" = "--showoutputonpass" ]; then
-        showoutputonpass=1
-        shift 
+    while [ $opt_check -eq 1 ]; do
+        if [ "$1" = "--test-category" ]; then
+            testcategory=$2
+            shift 2
+        elif [ "$1" = "--test-message" ]; then
+            testmessage=$2
+            shift 2
+        elif [ "$1" = "--timeout" ]; then
+            timeout=$2
+            shift 2
+        elif [ "$1" = "--max-lines" ]; then
+            maxlines=$2
+            shift 2
+        elif [ "$1" = "--showoutputonpass" ]; then
+            showoutputonpass=1
+            shift 
+        elif [ "$1" == "--expected" ]; then      
+            expected_fn="$2"
+            shift 2
+        elif [ "$1" == "--diff-cmd" ]; then      
+            diff_cmd="$2"
+            shift 2
+        else
+            opt_check=0
+        fi
+    done
+
+    let head_count=maxlines+1
+    if [ $timeout -gt 0 ]; then
+        timeout_cmd="timeout --verbose $timeout"
     fi
 
+    echo -en "\nExecuting: $* ... "
     result=$FAIL
-    if output=$(set -o pipefail; timeout $timeout $* 2>&1 | head -$maxlines); then
-        result=$PASS
+    if output=$(set -o pipefail; $timeout_cmd $* 2>&1 | head -$head_count > __output_orig.log); then
+        result=OK
     fi
 
-    echo -e "\nExecuting: $* ... $result"
+    line_count=$(cat __output_orig.log | wc -l)
+    cat __output_orig.log | head -$maxlines > __output.log
+    if [ $line_count -gt $maxlines ]
+    then
+        echo "... additional lines have been omitted ..." >> __output.log
+    fi
+
+    echo "$result"
+    if [ $result = OK -a -n "$diff_cmd" ]; then
+        if $diff_cmd &>/dev/null; then
+          echo "*** Correct Result Detected***" >> __output.log
+        else
+          echo "*** Incorrect Result Detected***" >> __output.log
+          result=$FAIL
+          incorrect_result=1
+        fi
+    fi
+    if [ -n "$expected_fn" -a -r "$expected_fn" ]; then
+        # Expected file specified and exists
+        if [ $incorrect_result -eq 1 -o -z "$diff_cmd" ]; then
+            echo "=========================================================" >> __output.log
+            echo "EXPECTED OUTPUT" >> __output.log
+            echo "=========================================================" >> __output.log
+            cat $expected_fn >> __output.log
+        fi
+    fi
     if [ $result = $FAIL -o $showoutputonpass = 1 ]; then
         echo "----------------------------------------------------------------"
-        echo "$output"
+        cat __output.log
         echo "----------------------------------------------------------------"
+    fi
+
+    if [ $result = OK ]; then
+       result=$PASS
     fi
 
     if [ -n "$testmessage" ]; then

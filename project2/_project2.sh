@@ -4,7 +4,7 @@ require-pdf report.pdf
 if [ -e Makefile ]; then
 
   rm *.o sysman >/dev/null 2>&1
-  do-compile make sysman
+  do-compile --expect-exe sysman make
   exit-if-must-pass-tests-failed
 
 elif [ -r sysman -a -r sysman.py ]; then 

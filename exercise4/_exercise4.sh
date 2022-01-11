@@ -9,7 +9,7 @@ require-files httpv.c Makefile
 
 # Compile httpv
 [ -r httpv ] && rm httpv
-do-compile --always-show-output "make" "httpv"
+do-compile --always-show-output --expect-exe httpv make
 
 exit-if-must-pass-tests-failed
 

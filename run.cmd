@@ -2,11 +2,13 @@ if "%1" == "" goto none
 goto continue
 
 :none
-echo Usage: run asmtcode
+echo Usage: run asmtcode [ -d ]
 goto done
 
 :continue
 
-docker run -it --rm -v %cd%:/submission_src -v %~dp0:/tests  bjucps/cps250-test bash tests/rundocker.sh %1
+setlocal
+if "%2" == "-d" set DEBUG_OPT=-x
+docker run -it --rm -v %cd%:/submission_src -v %~dp0:/tests  bjucps/cps250-test bash %DEBUG_OPT% tests/rundocker.sh %*
 
 :done
