@@ -21,4 +21,4 @@ fi
 
 report-result $result "Warnings" "No differences with official solution"
 
-require-files --test-message "report submitted" report.md
+require-files --test-message "Report submitted" report.md
