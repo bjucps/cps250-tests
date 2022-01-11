@@ -2,7 +2,7 @@ require-files --test-message "linkcheck.sh submitted" linkcheck.sh
 
 exit-if-must-pass-tests-failed
 
-python3  -m http.server 80 --directory $TEST_DIR &
+sudo python3  -m http.server 80 --directory $TEST_DIR &
 sleep 1
 
 # Remove any .txt or .html files, if submitted...
