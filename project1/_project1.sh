@@ -75,7 +75,7 @@ fi
 
 report-result $result "Warning" "Correct server response to valid request"
 
-kill $(ps | grep webserver | awk ' {print $1} ')
+pkill -f webserver
 sleep 1
 
 dump-server-log
