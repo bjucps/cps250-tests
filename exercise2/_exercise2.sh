@@ -11,4 +11,6 @@ rm *.txt *.html 2>/dev/null
 chmod +x linkcheck.sh
 run-program --test-message "linkcheck runs without error" --timeout 5 --showoutputonpass ./linkcheck.sh http://localhost/tests/ex2sample.html
 
+sudo pkill -f python3
+
 require-pdf report.pdf
