@@ -1,1 +1,1 @@
-INSTALL_PACKAGES="valgrind libbsd-dev"
+INSTALL_PACKAGES="valgrind libbsd-dev libc6-dbg"
