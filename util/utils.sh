@@ -379,9 +379,9 @@ function forbidden-string-function-check {
     result=$PASS
     for file in $*
     do
-        for func in strcpy strncpy strcat strncat sprintf
+        for func in strcpy strncpy strcat strncat "[^a]sprintf"
         do
-        if grep $func $file >/dev/null
+        if grep "$func" $file >/dev/null
         then
             result=$FAIL
             echo "* $func detected in $file" >> /tmp/forbidden-string-log

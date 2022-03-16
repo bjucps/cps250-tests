@@ -2,7 +2,7 @@ function runit {
     echo "******************************************************"
     echo Executing $*...
     echo "------------------------------------------------------"
-    $* | head -20
+    $* 2>&1 | head -20
 }
 
 require-files httpv.c Makefile
