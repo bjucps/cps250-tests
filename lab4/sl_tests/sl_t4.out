@@ -1,0 +1,32 @@
+
+I have 4 numbers here...
+num_list[0] = 1; nsum = 1
+num_list[1] = 2; nsum = 3
+num_list[2] = 3; nsum = 6
+num_list[3] = 4; nsum = 10
+
+Which index should I delete? 
+Naughty user!  I can't delete that item!  I'll delete the first item...
+
+I have 3 numbers here...
+num_list[0] = 2; nsum = 2
+num_list[1] = 3; nsum = 5
+num_list[2] = 4; nsum = 9
+
+Enter a number: Where should I insert it? 
+Naughty user!  I can't insert it there!  I'll do it at the end...
+
+I have 4 numbers here...
+num_list[0] = 2; nsum = 2
+num_list[1] = 3; nsum = 5
+num_list[2] = 4; nsum = 9
+num_list[3] = 4; nsum = 13
+
+Would you like:
+---------------
+(a): Apples
+(b): amBrosia
+(c): aCorns
+---------------
+> 
+Hey, you didn't choose anything!

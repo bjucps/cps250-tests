@@ -284,10 +284,12 @@ function run-program {
     local showoutputonpass=0 
     local maxlines=50
     local result
+    local input_fn
     local expected_fn
     local incorrect_result=0
     local opt_check=1
     local timeout_cmd
+    local diff_cmd
 
     testcategory="Warning"
     while [ $opt_check -eq 1 ]; do
@@ -306,10 +308,14 @@ function run-program {
         elif [ "$1" = "--showoutputonpass" ]; then
             showoutputonpass=1
             shift 
-        elif [ "$1" == "--expected" ]; then      
+        elif [ "$1" = "--expected" ]; then      
             expected_fn="$2"
             shift 2
-        elif [ "$1" == "--diff-cmd" ]; then      
+            diff_cmd="diff $expected_fn __output_orig.log"
+        elif [ "$1" = "--input" ]; then
+            input_fn="$2"
+            shift 2
+        elif [ "$1" = "--diff-cmd" ]; then      
             diff_cmd="$2"
             shift 2
         else
@@ -322,10 +328,17 @@ function run-program {
         timeout_cmd="timeout --verbose $timeout"
     fi
 
-    echo -en "\nExecuting: $* ... "
     result=$FAIL
-    if output=$(set -o pipefail; $timeout_cmd $* 2>&1 | head -$head_count > __output_orig.log); then
-        result=OK
+    if [ -n "$input_fn" -a -r "$input_fn" ]; then
+        echo -en "\nExecuting: $*  (input=${input_fn})... "
+        if output=$(set -o pipefail; $timeout_cmd $* <"$input_fn" 2>&1 | head -$head_count > __output_orig.log); then
+            result=$PASS
+        fi
+    else
+        echo -en "\nExecuting: $*  (input=STDIN)... "
+        if output=$(set -o pipefail; $timeout_cmd $* 2>&1 | head -$head_count > __output_orig.log); then
+            result=$PASS
+        fi
     fi
 
     line_count=$(cat __output_orig.log | wc -l)
@@ -336,7 +349,8 @@ function run-program {
     fi
 
     echo "$result"
-    if [ $result = OK -a -n "$diff_cmd" ]; then
+    if [ "$result" = "$PASS" -a -n "$diff_cmd" ]; then
+	echo "*** RUNNING DIFF: $diff_cmd" >>__output.log
         if $diff_cmd &>/dev/null; then
           echo "*** Correct Result Detected***" >> __output.log
         else
