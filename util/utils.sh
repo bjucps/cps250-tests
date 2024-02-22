@@ -331,12 +331,12 @@ function run-program {
     result=$FAIL
     if [ -n "$input_fn" -a -r "$input_fn" ]; then
         echo -en "\nExecuting: $*  (input=${input_fn})... "
-        if output=$(set -o pipefail; $timeout_cmd $* <"$input_fn" 2>&1 | head -$head_count > __output_orig.log); then
+        if output=$(set -o pipefail; $timeout_cmd $* <"$input_fn" 2>&1 > __output_orig.log); then
             result=$PASS
         fi
     else
         echo -en "\nExecuting: $*  (input=STDIN)... "
-        if output=$(set -o pipefail; $timeout_cmd $* 2>&1 | head -$head_count > __output_orig.log); then
+        if output=$(set -o pipefail; $timeout_cmd $* 2>&1 > __output_orig.log); then
             result=$PASS
         fi
     fi

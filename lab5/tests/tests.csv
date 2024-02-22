@@ -1,0 +1,8 @@
+test_lru1.in,1,test_lru1.1slot.out
+test_lru1.in,2,test_lru1.2slot.out
+test_lru1.in,3,test_lru1.3slot.out
+test_lru1.in,5,test_lru1.5slot.out
+test_lru2.in,10,test_lru2.10slot.out
+test_lru2.in,100,test_lru2.100slot.out
+test_lru2.in,1000,test_lru2.1000slot.out
+
