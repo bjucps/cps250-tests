@@ -13,7 +13,7 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-[ "$2" = "-d" ] && export DEBUG=1
+[ "$2" = "-i" ] && export INTERACTIVE=1
 
 export PROJECT=$1
 export TEST_DIR=$TEST_BASE_DIR/$PROJECT
@@ -47,3 +47,7 @@ echo Overall Result: $(cat $SUBMISSION_DIR/submission.status)
 
 #cp $LOG_FILE $TEST_RESULT_FILE README.md /submission_src
 cp README.md /submission_src
+
+if [ -n "$INTERACTIVE" ]; then
+	bash -i
+fi

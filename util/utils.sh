@@ -290,6 +290,7 @@ function run-program {
     local opt_check=1
     local timeout_cmd
     local diff_cmd
+    local diff_show_cmd
 
     testcategory="Warning"
     while [ $opt_check -eq 1 ]; do
@@ -312,6 +313,7 @@ function run-program {
             expected_fn="$2"
             shift 2
             diff_cmd="diff $expected_fn __output_orig.log"
+            diff_show_cmd="diff -u $expected_fn __output_orig.log"
         elif [ "$1" = "--input" ]; then
             input_fn="$2"
             shift 2
@@ -363,9 +365,11 @@ function run-program {
         # Expected file specified and exists
         if [ $incorrect_result -eq 1 -o -z "$diff_cmd" ]; then
             echo "=========================================================" >> __output.log
-            echo "EXPECTED OUTPUT" >> __output.log
+            #echo "EXPECTED OUTPUT" >> __output.log
+            echo "EXPECTED vs. ACTUAL" >> __output.log
             echo "=========================================================" >> __output.log
-            cat $expected_fn >> __output.log
+            $diff_show_cmd >> __output.log
+            #cat $expected_fn >> __output.log
         fi
     fi
     if [ $result = $FAIL -o $showoutputonpass = 1 ]; then
