@@ -69,6 +69,9 @@ git pull
 gen-readme
 
 git add README.md submission.status
+if [ -d _auto_test_diffs ]; then
+    git add _auto_test_diffs
+fi
 git commit -m "Automatic Tester Results"
 
 git push

@@ -289,8 +289,8 @@ function run-program {
     local incorrect_result=0
     local opt_check=1
     local timeout_cmd
-    local diff_cmd
-    local diff_show_cmd
+    local diff_cmd="diff"
+    local diff_args
 
     testcategory="Warning"
     while [ $opt_check -eq 1 ]; do
@@ -312,8 +312,7 @@ function run-program {
         elif [ "$1" = "--expected" ]; then      
             expected_fn="$2"
             shift 2
-            diff_cmd="diff $expected_fn __output_orig.log"
-            diff_show_cmd="diff -u $expected_fn __output_orig.log"
+            diff_args="$expected_fn __output_orig.log"
         elif [ "$1" = "--input" ]; then
             input_fn="$2"
             shift 2
@@ -351,9 +350,9 @@ function run-program {
     fi
 
     echo "$result"
-    if [ "$result" = "$PASS" -a -n "$diff_cmd" ]; then
-	echo "*** RUNNING DIFF: $diff_cmd" >>__output.log
-        if $diff_cmd &>/dev/null; then
+    if [ "$result" = "$PASS" -a -n "$diff_args" ]; then
+	echo "*** RUNNING DIFF: $diff_cmd $diff_args" >>__output.log
+        if $diff_cmd $diff_args &>/dev/null; then
           echo "*** Correct Result Detected***" >> __output.log
         else
           echo "*** Incorrect Result Detected***" >> __output.log
@@ -363,13 +362,13 @@ function run-program {
     fi
     if [ -n "$expected_fn" -a -r "$expected_fn" ]; then
         # Expected file specified and exists
-        if [ $incorrect_result -eq 1 -o -z "$diff_cmd" ]; then
-            echo "=========================================================" >> __output.log
-            #echo "EXPECTED OUTPUT" >> __output.log
-            echo "EXPECTED vs. ACTUAL" >> __output.log
-            echo "=========================================================" >> __output.log
-            $diff_show_cmd >> __output.log
-            #cat $expected_fn >> __output.log
+        if [ $incorrect_result -eq 1 ]; then
+            # Generate diff HTML between expected/actual output, add link in result table
+            diff_name="_auto_test_diffs/$(realpath --relative-to "$TEST_DIR" "$expected_fn")_diff.html"
+            diff_sdir=$(dirname "$diff_name")
+            mkdir -p "$diff_sdir"
+            python3 $TEST_BASE_DIR/util/htmldiff.py "$expected_fn" __output_orig.log >"$diff_name"
+            testmessage="${testmessage} [diff]($diff_name)"
         fi
     fi
     if [ $result = $FAIL -o $showoutputonpass = 1 ]; then

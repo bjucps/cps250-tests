@@ -47,6 +47,9 @@ echo Overall Result: $(cat $SUBMISSION_DIR/submission.status)
 
 #cp $LOG_FILE $TEST_RESULT_FILE README.md /submission_src
 cp README.md /submission_src
+if [ -d _auto_test_diffs ]; then
+    cp -r _auto_test_diffs /submission_src
+fi
 
 if [ -n "$INTERACTIVE" ]; then
 	bash -i
