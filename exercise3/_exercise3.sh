@@ -1,3 +1,4 @@
+#!/bin/bash
 require-files --test-message "Submitted ix.c" ix.c
 do-compile --always-show-output --test-message "ix.c compiles with -g" gcc -g -oix ix.c -lbsd
 
