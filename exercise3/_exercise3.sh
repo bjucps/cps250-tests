@@ -1,17 +1,38 @@
-
-require-files args.c
-
-# ---- Compile --------
-
-do-compile --always-show-output gcc -g  $TEST_DIR/ex3_args_test.c args.c -oargs_asan -fsanitize=address -lbsd
-do-compile --always-show-output gcc -g  $TEST_DIR/ex3_args_test.c args.c -oargs_valgrind -lbsd
+require-files --test-message "Submitted ix.c" ix.c
+do-compile --always-show-output --test-message "ix.c compiles with -g" gcc -g -oix ix.c -lbsd
 
 exit-if-must-pass-tests-failed
 
-require-pdf report.pdf
+require-files --test-message "Submitted report.txt" report.txt
+forbidden-string-function-check ix.c
 
-forbidden-string-function-check args.c
+version=$(./ix <<<"this" | awk -f "$TEST_DIR/version_check.awk")
+vstem=""
+case "$version" in
+	75)
+		report-result "$PASS" "Warning"	"Version check passed (max 75)"
+		vstem="max75"
+		;;
+	100)
+		report-result "$PASS" "Warning"	"Version check passed (max 100)"
+		vstem="max100"
+		;;
+	*)
+		report-error "Warning" "Version check failed"
+		;;
+esac
 
-run-program --test-message "ASAN executes with no errors" --showoutputonpass ./args_asan | sed 's/^==[^=]*==/====/'
-run-program --test-message "valgrind executes with no errors" --showoutputonpass valgrind ./args_valgrind | sed 's/^==[^=]*==/====/'
-
+if [ -n "$vstem" ]; then
+	for ingz in "$TEST_DIR"/tests/*.in.gz; do
+		base=$(basename "$ingz")
+		outgz="$TEST_DIR/tests/${vstem}_${base%%.in.gz}.out.gz"
+		infile="${ingz%%.gz}"
+		outfile="${outgz%%.gz}"
+		if zcat "$outgz" >"$outfile" && zcat "$ingz" >"$infile"; then
+			run-program --test-message "IX Test: $base ($vstem)" --expected "$outfile" --input "$infile" ./ix
+			rm -f "$infile" "$outfile"
+		else
+			report-error "Warning" "Failed to unpack expected $vstem output for $base"
+		fi
+	done
+fi
