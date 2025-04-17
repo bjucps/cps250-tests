@@ -7,7 +7,7 @@ exit-if-must-pass-tests-failed
 require-files --test-message "Submitted report.txt" report.txt
 forbidden-string-function-check ix.c
 
-version=$(./ix <<<"this" | awk -f "$TEST_DIR/version_check.awk")
+version=$(./ix <<<"this is a line" | awk -f "$TEST_DIR/version_check.awk")
 vstem=""
 case "$version" in
 	75)
