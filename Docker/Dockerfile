@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 
+FROM ubuntu:latest
 
 # Prevent tzdata apt-get installation from asking for input.
 ENV DEBIAN_FRONTEND=noninteractive
